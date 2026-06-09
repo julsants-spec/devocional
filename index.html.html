@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Voltando para Deus — Juliana</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #FDF8F0; min-height: 100vh; }
+
+  .header { background: #4A2E6B; padding: 24px 20px 20px; text-align: center; }
+  .header h1 { color: #fff; font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .header p { color: #C8A8E9; font-size: 13px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 4px rgba(74,46,107,0.08); }
+  .stat-num { font-size: 24px; font-weight: 700; color: #7B4FA6; }
+  .stat-label { font-size: 10px; color: #888; margin-top: 2px; }
+
+  .progress-wrap { padding: 0 16px 16px; }
+  .progress-bg { background: #E8D5F5; border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #7B4FA6, #D4A843); border-radius: 999px; transition: width 0.4s ease; }
+  .progress-label { font-size: 11px; color: #7B4FA6; text-align: right; margin-top: 4px; font-weight: 600; }
+
+  .verse-box { margin: 0 16px 16px; background: #fff; border-left: 4px solid #D4A843; border-radius: 0 10px 10px 0; padding: 12px 14px; font-size: 13px; font-style: italic; color: #6B5A80; line-height: 1.6; box-shadow: 0 1px 4px rgba(74,46,107,0.06); }
+
+  .congrats { margin: 0 16px 16px; background: #F5E6B8; border-radius: 12px; padding: 14px; text-align: center; font-size: 14px; color: #7A5A30; display: none; font-weight: 500; }
+
+  .phase-block { margin: 0 16px 20px; }
+  .phase-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; margin-bottom: 10px; }
+  .phase-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .phase-title { font-size: 14px; font-weight: 600; color: #2C1A40; flex: 1; }
+  .phase-range { font-size: 11px; color: #888; }
+  .phase-count { font-size: 13px; font-weight: 700; }
+
+  .days-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .day-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 10px 4px; border-radius: 10px; border: 1.5px solid #E0D0F0; background: #fff; cursor: pointer; min-height: 62px; transition: all 0.15s; user-select: none; }
+  .day-btn:active { transform: scale(0.94); }
+  .day-num { font-size: 17px; font-weight: 600; color: #4A2E6B; }
+  .day-label { font-size: 9px; color: #aaa; }
+  .day-check { font-size: 15px; display: none; }
+  .day-btn.done { border-color: transparent; }
+  .day-btn.done .day-num { color: #fff; }
+  .day-btn.done .day-label { color: rgba(255,255,255,0.7); }
+  .day-btn.done .day-check { display: block; color: #fff; }
+
+  .reset-wrap { padding: 8px 16px 32px; text-align: center; }
+  .reset-btn { background: none; border: 1px solid #C8A8E9; border-radius: 20px; padding: 8px 24px; font-size: 12px; color: #9A7AB0; cursor: pointer; }
+
+  .footer { background: #4A2E6B; padding: 16px; text-align: center; }
+  .footer p { color: #C8A8E9; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Voltando para Deus ✦</h1>
+  <p>Marque cada dia que você aparecer</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-num" id="stat-done">0</div><div class="stat-label">concluídos</div></div>
+  <div class="stat-card"><div class="stat-num" id="stat-left">40</div><div class="stat-label">restantes</div></div>
+  <div class="stat-card"><div class="stat-num" id="stat-pct">0%</div><div class="stat-label">da jornada</div></div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bg"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  <div class="progress-label" id="prog-label">0 de 40 dias</div>
+</div>
+
+<div class="verse-box" id="verse-box">
+  "Chegai-vos a Deus, e ele se chegará a vós." — Tiago 4:8
+</div>
+
+<div class="congrats" id="congrats">
+  🌸 Juliana, você chegou até aqui. Isso é lindo demais. Deus viu cada passo.
+</div>
+
+<div id="phases"></div>
+
+<div class="reset-wrap">
+  <button class="reset-btn" onclick="resetAll()">Reiniciar jornada</button>
+</div>
+
+<div class="footer">
+  <p>Preparado com carinho para Juliana ✦</p>
+</div>
+
+<script>
+const phases = [
+  { num:1, title:"Só Aparecer", range:"Dias 1–10", color:"#7B4FA6", bg:"#F3ECF9", start:1, end:10,
+    verse:'"Chegai-vos a Deus, e ele se chegará a vós." — Tiago 4:8' },
+  { num:2, title:"Começar a Falar", range:"Dias 11–20", color:"#C06090", bg:"#FDF0F4", start:11, end:20,
+    verse:'"Derramai diante dele o vosso coração." — Salmo 62:8' },
+  { num:3, title:"Abrir o Coração", range:"Dias 21–30", color:"#5A9E7C", bg:"#EDF7F2", start:21, end:30,
+    verse:'"Sede quietos e sabei que eu sou Deus." — Salmo 46:10' },
+  { num:4, title:"Dar um Passo Externo", range:"Dias 31–40", color:"#4A7AB5", bg:"#EDF3FB", start:31, end:40,
+    verse:'"O Senhor mesmo vai à tua frente. Ele estará contigo." — Deuteronômio 31:8' },
+];
+
+const KEY = 'juliana_40dias';
+let checked = new Set();
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify([...checked]));
+}
+function load() {
+  try {
+    const d = localStorage.getItem(KEY);
+    if (d) checked = new Set(JSON.parse(d));
+  } catch(e) {}
+}
+function toggle(day) {
+  if (checked.has(day)) checked.delete(day);
+  else checked.add(day);
+  save();
+  render();
+}
+function resetAll() {
+  if (!confirm('Reiniciar todos os dias? Seu progresso será apagado.')) return;
+  checked.clear();
+  save();
+  render();
+}
+
+function render() {
+  const done = checked.size;
+  const left = 40 - done;
+  const pct = Math.round((done / 40) * 100);
+
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-left').textContent = left;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = done + ' de 40 dias';
+  document.getElementById('congrats').style.display = done === 40 ? 'block' : 'none';
+
+  let activeVerse = phases[0].verse;
+  for (const ph of phases) {
+    let phDone = 0;
+    for (let d = ph.start; d <= ph.end; d++) if (checked.has(d)) phDone++;
+    if (phDone < (ph.end - ph.start + 1)) { activeVerse = ph.verse; break; }
+    activeVerse = ph.verse;
+  }
+  document.getElementById('verse-box').textContent = activeVerse;
+
+  const container = document.getElementById('phases');
+  container.innerHTML = '';
+
+  for (const ph of phases) {
+    let phDone = 0;
+    for (let d = ph.start; d <= ph.end; d++) if (checked.has(d)) phDone++;
+    const phTotal = ph.end - ph.start + 1;
+    const complete = phDone === phTotal;
+
+    const block = document.createElement('div');
+    block.className = 'phase-block';
+
+    const header = document.createElement('div');
+    header.className = 'phase-header';
+    header.style.background = complete ? ph.color + '22' : ph.bg;
+
+    const dot = document.createElement('div');
+    dot.className = 'phase-dot';
+    dot.style.background = ph.color;
+    dot.style.opacity = complete ? '1' : '0.5';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'phase-title';
+    titleEl.textContent = (complete ? '✓ ' : '') + ph.title;
+
+    const rangeEl = document.createElement('div');
+    rangeEl.className = 'phase-range';
+    rangeEl.textContent = ph.range;
+
+    const countEl = document.createElement('div');
+    countEl.className = 'phase-count';
+    countEl.style.color = ph.color;
+    countEl.textContent = phDone + '/' + phTotal;
+
+    header.appendChild(dot);
+    header.appendChild(titleEl);
+    header.appendChild(rangeEl);
+    header.appendChild(countEl);
+
+    const grid = document.createElement('div');
+    grid.className = 'days-grid';
+
+    for (let d = ph.start; d <= ph.end; d++) {
+      const isDone = checked.has(d);
+      const btn = document.createElement('button');
+      btn.className = 'day-btn' + (isDone ? ' done' : '');
+      if (isDone) btn.style.background = ph.color;
+      btn.onclick = () => toggle(d);
+
+      const numEl = document.createElement('div');
+      numEl.className = 'day-num';
+      numEl.textContent = d;
+
+      const labelEl = document.createElement('div');
+      labelEl.className = 'day-label';
+      labelEl.textContent = 'dia';
+
+      const checkEl = document.createElement('div');
+      checkEl.className = 'day-check';
+      checkEl.textContent = '✓';
+
+      btn.appendChild(numEl);
+      btn.appendChild(labelEl);
+      btn.appendChild(checkEl);
+      grid.appendChild(btn);
+    }
+
+    block.appendChild(header);
+    block.appendChild(grid);
+    container.appendChild(block);
+  }
+}
+
+load();
+render();
+</script>
+</body>
+</html>
